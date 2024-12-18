@@ -1,78 +1,88 @@
-"use client";
-import { useState } from "react";
-import Image from "next/image";
+'use client'
+import { useState } from 'react'
+import Image from 'next/image'
 
 interface Props {
-  stepIndex: number;
-  onUpload: (url: string) => void;
+  stepIndex: number
+  type: 'title' | 'step'
+  onUpload: (url: string) => void
 }
 
-export default function ImageUpload({ onUpload }: Props) {
-  const [uploading, setUploading] = useState(false);
-  const [preview, setPreview] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+export default function ImageUpload({ stepIndex, type, onUpload }: Props) {
+  const [uploading, setUploading] = useState(false)
+  const [preview, setPreview] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  const uploadId = `image-upload-${type}-${stepIndex}`
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const file = e.target.files?.[0]
+    if (!file) return
 
-    // 파일 크기 체크 (5MB)
     if (file.size > 5 * 1024 * 1024) {
-      setError("파일 크기는 5MB 이하여야 합니다.");
-      return;
+      setError('파일 크기는 5MB 이하여야 합니다.')
+      return
     }
 
-    // 이미지 파일 타입 체크
-    if (!file.type.startsWith("image/")) {
-      setError("이미지 파일만 업로드 가능합니다.");
-      return;
+    if (!file.type.startsWith('image/')) {
+      setError('이미지 파일만 업로드 가능합니다.')
+      return
     }
 
     try {
-      setError(null);
-      setUploading(true);
+      setError(null)
+      setUploading(true)
 
-      // 미리보기 생성
-      const previewUrl = URL.createObjectURL(file);
-      setPreview(previewUrl);
+      const previewUrl = URL.createObjectURL(file)
+      setPreview(previewUrl)
 
-      const base64 = await convertToBase64(file);
+      const base64 = await convertToBase64(file)
 
-      const response = await fetch("/api/upload", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ data: base64 }),
-      });
-
-      if (!response.ok) {
-        throw new Error("이미지 업로드에 실패했습니다.");
+      const requestData = {
+        data: base64,
+        imageType: type,
+        stepIndex: type === 'step' ? stepIndex : -1,
       }
 
-      const data = await response.json();
-      onUpload(data.secure_url);
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestData),
+      })
+
+      if (!response.ok) {
+        throw new Error('이미지 업로드에 실패했습니다.')
+      }
+
+      const data = await response.json()
+
+      if (data.imageType !== type) {
+        throw new Error('이미지 타입이 일치하지 않습니다.')
+      }
+
+      if (type === 'step' && data.stepIndex !== stepIndex) {
+        throw new Error('스텝 인덱스가 일치하지 않습니다.')
+      }
+
+      onUpload(data.secure_url)
     } catch (error) {
-      setError("이미지 업로드 중 오류가 발생했습니다.");
-      console.error("이미지 업로드 실패:", error);
+      console.error('이미지 업로드 실패:', error)
+      setError('이미지 업로드 중 오류가 발생했습니다.')
     } finally {
-      setUploading(false);
+      setUploading(false)
     }
-  };
+  }
 
   const convertToBase64 = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = (error) => reject(error);
-    });
-  };
-
-  const handleRemoveImage = () => {
-    setPreview(null);
-    setError(null);
-  };
+      const reader = new FileReader()
+      reader.readAsDataURL(file)
+      reader.onload = () => resolve(reader.result as string)
+      reader.onerror = (error) => reject(error)
+    })
+  }
 
   return (
     <div className="w-full">
@@ -92,7 +102,10 @@ export default function ImageUpload({ onUpload }: Props) {
               className="object-cover rounded-lg"
             />
             <button
-              onClick={handleRemoveImage}
+              onClick={() => {
+                setPreview(null)
+                setError(null)
+              }}
               className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
             >
               ✕
@@ -106,10 +119,10 @@ export default function ImageUpload({ onUpload }: Props) {
               onChange={handleUpload}
               disabled={uploading}
               className="hidden"
-              id="image-upload"
+              id={uploadId}
             />
             <label
-              htmlFor="image-upload"
+              htmlFor={uploadId}
               className="flex flex-col items-center cursor-pointer p-4"
             >
               <svg
@@ -126,7 +139,7 @@ export default function ImageUpload({ onUpload }: Props) {
                 />
               </svg>
               <span className="mt-2 text-gray-500">
-                {uploading ? "업로드 중..." : "이미지를 선택하세요"}
+                {uploading ? '업로드 중...' : '이미지를 선택하세요'}
               </span>
               <span className="mt-1 text-sm text-gray-400">
                 최대 5MB, 이미지 파일만 가능
@@ -136,5 +149,5 @@ export default function ImageUpload({ onUpload }: Props) {
         )}
       </div>
     </div>
-  );
+  )
 }

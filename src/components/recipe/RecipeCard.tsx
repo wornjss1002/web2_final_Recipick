@@ -11,10 +11,13 @@ interface RecipeCardProps {
 
 export default function RecipeCard({ recipe }: RecipeCardProps) {
   const defaultImage = '/image.png'
-  const imageUrl =
-    recipe.images && recipe.images.length > 0
-      ? (recipe.images[0] as RecipeImage).imageUrl
-      : defaultImage
+
+  // 디버깅을 위한 상세 로그
+  console.log('=== RecipeCard 데이터 ===')
+  console.log('전체 레시피:', recipe)
+  console.log('titleImage:', recipe.titleImage)
+
+  const imageUrl = recipe.titleImage || defaultImage
 
   return (
     <Link href={`/recipe/${recipe._id}`} className="block max-w-3xl mx-auto">

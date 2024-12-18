@@ -1,149 +1,149 @@
-'use client'
+"use client";
 
-import { useEffect, useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useEffect, useState, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 
 interface Recipe {
-  _id: string
-  title: string // 레시피 제목
+  _id: string;
+  title: string;
   ingredients: {
-    name: string
-    quantity: string
-    unit: string
-  }[] // 재료 목록
+    name: string;
+    quantity: string;
+    unit: string;
+  }[];
   steps: {
-    description: string
-    imageUrl: string
-  }[] // 조리 단계
-  time: string // 조리 시간
-  difficulty: string // 난이도
+    description: string;
+    imageUrl: string;
+  }[];
+  time: string;
+  difficulty: string;
 }
 
-export default function EditMenu() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const recipeId = searchParams.get('recipeId')
-  const [recipe, setRecipe] = useState<Recipe | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+// EditMenuContent 컴포넌트로 분리
+function EditMenuContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const recipeId = searchParams.get("recipeId");
+  const [recipe, setRecipe] = useState<Recipe | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // 재료와 조리 단계를 추가하는 함수들
+  // 기존의 모든 함수들은 여기에 동일하게 유지
   const addIngredient = () => {
     setRecipe((prev) => {
-      if (!prev) return prev
+      if (!prev) return prev;
       return {
         ...prev,
         ingredients: [
           ...prev.ingredients,
-          { name: '', quantity: '', unit: '' },
+          { name: "", quantity: "", unit: "" },
         ],
-      }
-    })
-  }
+      };
+    });
+  };
 
   const addStep = () => {
     setRecipe((prev) => {
-      if (!prev) return prev
+      if (!prev) return prev;
       return {
         ...prev,
-        steps: [...prev.steps, { description: '', imageUrl: '' }],
-      }
-    })
-  }
+        steps: [...prev.steps, { description: "", imageUrl: "" }],
+      };
+    });
+  };
 
-  // 단계 삭제 함수 추가
   const removeStep = (indexToRemove: number) => {
     setRecipe((prev) => {
-      if (!prev) return prev
+      if (!prev) return prev;
       return {
         ...prev,
         steps: prev.steps.filter((_, index) => index !== indexToRemove),
-      }
-    })
-  }
+      };
+    });
+  };
+
+  const uploadImage = async (file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const response = await fetch("/api/edit", {
+        method: "POST",
+        body: formData,
+      });
+      if (!response.ok) throw new Error("이미지 업로드에 실패했습니다");
+      const data = await response.json();
+      return data.url;
+    } catch (error) {
+      console.error("Image upload error:", error);
+      throw error;
+    }
+  };
 
   useEffect(() => {
     const fetchRecipe = async () => {
-      if (!recipeId) return
+      if (!recipeId) return;
 
       try {
-        const response = await fetch(`/api/recipes/${recipeId}`)
-        if (!response.ok) throw new Error('레시피를 불러오는데 실패했습니다')
+        const response = await fetch(`/api/recipes/${recipeId}`);
+        if (!response.ok) throw new Error("레시피를 불러오는데 실패했습니다");
 
-        const data = await response.json()
-        setRecipe(data)
+        const data = await response.json();
+        setRecipe(data);
       } catch (error) {
-        console.error('Fetch error:', error)
+        console.error("Fetch error:", error);
         setError(
           error instanceof Error
             ? error.message
-            : '알 수 없는 에러가 발생했습니다'
-        )
+            : "알 수 없는 에러가 발생했습니다"
+        );
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
-    }
+    };
 
-    fetchRecipe()
-  }, [recipeId])
+    fetchRecipe();
+  }, [recipeId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!recipe) return
+    e.preventDefault();
+    if (!recipe) return;
 
     try {
       const response = await fetch(`/api/recipes/${recipeId}`, {
-        method: 'PUT',
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(recipe),
-      })
+      });
 
-      if (!response.ok) throw new Error('레시피 수정에 실패했습니다')
+      if (!response.ok) throw new Error("레시피 수정에 실패했습니다");
 
-      alert('수정이 완료되었습니다')
-      router.push('/mypage')
+      alert("수정이 완료되었습니다");
+      router.push("/mypage");
     } catch (error) {
-      alert('수정에 실패했습니다')
+      alert("수정에 실패했습니다");
       setError(
-        error instanceof Error ? error.message : '수정 중 오류가 발생했습니다'
-      )
+        error instanceof Error ? error.message : "수정 중 오류가 발생했습니다"
+      );
     }
-  }
+  };
 
-  // 이미지 업로드 함수 추가
-  const uploadImage = async (file: File) => {
-    const formData = new FormData()
-    formData.append('file', file)
-
-    try {
-      const response = await fetch('/api/edit', {
-        method: 'POST',
-        body: formData,
-      })
-      if (!response.ok) throw new Error('이미지 업로드에 실패했습니다')
-      const data = await response.json()
-      return data.url // 업로드된 이미지의 URL 반환
-    } catch (error) {
-      console.error('Image upload error:', error)
-      throw error
-    }
-  }
-
-  if (isLoading) return <div>로딩 중...</div>
-  if (error) return <div>에러: {error}</div>
-  if (!recipe) return <div>레시피를 찾을 수 없습니다</div>
+  if (isLoading) return <div>로딩 중...</div>;
+  if (error) return <div>에러: {error}</div>;
+  if (!recipe) return <div>레시피를 찾을 수 없습니다</div>;
 
   return (
     <div className="container mx-auto p-6">
       <h2 className="text-2xl font-bold mb-4">레시피 수정</h2>
       <form className="space-y-4 max-w-3xl mx-auto">
+        {/* 기존 JSX 코드 유지 */}
         <div>
           <label className="block mb-2">레시피 제목</label>
           <input
             type="text"
-            value={recipe?.title || ''}
+            value={recipe?.title || ""}
             onChange={(e) =>
               setRecipe((prev) => ({ ...prev!, title: e.target.value }))
             }
@@ -159,12 +159,12 @@ export default function EditMenu() {
                 type="text"
                 value={ingredient.name}
                 onChange={(e) => {
-                  const newIngredients = [...recipe.ingredients]
+                  const newIngredients = [...recipe.ingredients];
                   newIngredients[index] = {
                     ...newIngredients[index],
                     name: e.target.value,
-                  }
-                  setRecipe({ ...recipe, ingredients: newIngredients })
+                  };
+                  setRecipe({ ...recipe, ingredients: newIngredients });
                 }}
                 className="w-full p-2 border rounded"
                 placeholder="재료명"
@@ -173,12 +173,12 @@ export default function EditMenu() {
                 type="text"
                 value={ingredient.quantity}
                 onChange={(e) => {
-                  const newIngredients = [...recipe.ingredients]
+                  const newIngredients = [...recipe.ingredients];
                   newIngredients[index] = {
                     ...newIngredients[index],
                     quantity: e.target.value,
-                  }
-                  setRecipe({ ...recipe, ingredients: newIngredients })
+                  };
+                  setRecipe({ ...recipe, ingredients: newIngredients });
                 }}
                 className="w-24 p-2 border rounded"
                 placeholder="수량"
@@ -203,12 +203,12 @@ export default function EditMenu() {
                 <textarea
                   value={step.description}
                   onChange={(e) => {
-                    const newSteps = [...recipe.steps]
+                    const newSteps = [...recipe.steps];
                     newSteps[index] = {
                       ...newSteps[index],
                       description: e.target.value,
-                    }
-                    setRecipe({ ...recipe, steps: newSteps })
+                    };
+                    setRecipe({ ...recipe, steps: newSteps });
                   }}
                   className="w-full p-2 border rounded"
                   rows={3}
@@ -228,15 +228,15 @@ export default function EditMenu() {
                   onChange={async (e) => {
                     if (e.target.files && e.target.files[0]) {
                       try {
-                        const imageUrl = await uploadImage(e.target.files[0])
-                        const newSteps = [...recipe.steps]
+                        const imageUrl = await uploadImage(e.target.files[0]);
+                        const newSteps = [...recipe.steps];
                         newSteps[index] = {
                           ...newSteps[index],
                           imageUrl: imageUrl,
-                        }
-                        setRecipe({ ...recipe, steps: newSteps })
+                        };
+                        setRecipe({ ...recipe, steps: newSteps });
                       } catch (error) {
-                        setError('이미지 업로드에 실패했습니다')
+                        setError("이미지 업로드에 실패했습니다");
                       }
                     }
                   }}
@@ -273,7 +273,7 @@ export default function EditMenu() {
           </button>
           <button
             type="button"
-            onClick={() => router.push('/mypage')}
+            onClick={() => router.push("/mypage")}
             className="px-6 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
           >
             취소
@@ -281,5 +281,14 @@ export default function EditMenu() {
         </div>
       </form>
     </div>
-  )
+  );
+}
+
+// 메인 컴포넌트
+export default function EditMenu() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <EditMenuContent />
+    </Suspense>
+  );
 }

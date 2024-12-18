@@ -27,9 +27,9 @@ export interface Step {
 }
 
 export interface Recipe {
-  _id: string | ObjectId
-  title_img: string
+  _id: string
   title: string
+  titleImage?: string
   description: string
   ingredients: Ingredient[]
   steps: Step[]

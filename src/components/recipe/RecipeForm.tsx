@@ -1,71 +1,71 @@
-"use client";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import ImageUpload from "./ImageUpload"; // ImageUpload 컴포넌트를 임포트
+'use client'
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import ImageUpload from './ImageUpload' // ImageUpload 컴포넌트를 임포트
 
 export default function RecipeForm() {
-  const router = useRouter();
+  const router = useRouter()
   const [formData, setFormData] = useState({
-    title: "",
-    description: "",
-    titleImage: "", // 타이틀 이미지를 저장할 필드 추가
-    ingredients: [{ name: "", quantity: "", unit: "" }],
-    steps: [{ description: "", imageUrl: "" }],
-    tips: [""],
-  });
+    title: '',
+    description: '',
+    titleImage: '', // 타이틀 이미지를 저장할 필드 추가
+    ingredients: [{ name: '', quantity: '', unit: '' }],
+    steps: [{ description: '', imageUrl: '' }],
+    tips: [''],
+  })
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault()
 
     try {
-      const response = await fetch("/api/recipes", {
-        method: "POST",
+      const response = await fetch('/api/recipes', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify(formData),
-      });
+      })
 
       if (!response.ok) {
-        throw new Error("레시피 생성에 실패했습니다.");
+        throw new Error('레시피 생성에 실패했습니다.')
       }
 
-      const data = await response.json();
-      console.log("생성된 레시피 데이터:", data);
+      const data = await response.json()
+      console.log('생성된 레시피 데이터:', data)
 
       if (!data._id) {
-        throw new Error("레시피 ID가 없습니다.");
+        throw new Error('레시피 ID가 없습니다.')
       }
 
       // 24자리 16진수 문자열인지 확인
       if (!/^[0-9a-fA-F]{24}$/.test(data._id)) {
-        throw new Error("유효하지 않은 레시피 ID입니다.");
+        throw new Error('유효하지 않은 레시피 ID입니다.')
       }
 
-      router.push(`/recipe/${data._id}`);
-      router.refresh();
+      router.push(`/recipe/${data._id}`)
+      router.refresh()
     } catch (error) {
-      console.error("레시피 생성 중 오류:", error);
-      alert("레시피 생성에 실패했습니다.");
+      console.error('레시피 생성 중 오류:', error)
+      alert('레시피 생성에 실패했습니다.')
     }
-  };
+  }
 
   const addIngredient = () => {
     setFormData({
       ...formData,
       ingredients: [
         ...formData.ingredients,
-        { name: "", quantity: "", unit: "" },
+        { name: '', quantity: '', unit: '' },
       ],
-    });
-  };
+    })
+  }
 
   const addStep = () => {
     setFormData({
       ...formData,
-      steps: [...formData.steps, { description: "", imageUrl: "" }],
-    });
-  };
+      steps: [...formData.steps, { description: '', imageUrl: '' }],
+    })
+  }
 
   return (
     <form onSubmit={handleSubmit} className="max-w-2xl mx-auto">
@@ -76,7 +76,8 @@ export default function RecipeForm() {
             타이틀 이미지
           </label>
           <ImageUpload
-            stepIndex={0}
+            stepIndex={-1}
+            type="title"
             onUpload={(url: string) =>
               setFormData({ ...formData, titleImage: url })
             }
@@ -125,9 +126,9 @@ export default function RecipeForm() {
                 placeholder="재료명"
                 value={ingredient.name}
                 onChange={(e) => {
-                  const newIngredients = [...formData.ingredients];
-                  newIngredients[index].name = e.target.value;
-                  setFormData({ ...formData, ingredients: newIngredients });
+                  const newIngredients = [...formData.ingredients]
+                  newIngredients[index].name = e.target.value
+                  setFormData({ ...formData, ingredients: newIngredients })
                 }}
                 className="flex-1 rounded-md border-gray-300"
                 required
@@ -137,9 +138,9 @@ export default function RecipeForm() {
                 placeholder="수량"
                 value={ingredient.quantity}
                 onChange={(e) => {
-                  const newIngredients = [...formData.ingredients];
-                  newIngredients[index].quantity = e.target.value;
-                  setFormData({ ...formData, ingredients: newIngredients });
+                  const newIngredients = [...formData.ingredients]
+                  newIngredients[index].quantity = e.target.value
+                  setFormData({ ...formData, ingredients: newIngredients })
                 }}
                 className="w-24 rounded-md border-gray-300"
                 required
@@ -167,9 +168,9 @@ export default function RecipeForm() {
                 <textarea
                   value={step.description}
                   onChange={(e) => {
-                    const newSteps = [...formData.steps];
-                    newSteps[index].description = e.target.value;
-                    setFormData({ ...formData, steps: newSteps });
+                    const newSteps = [...formData.steps]
+                    newSteps[index].description = e.target.value
+                    setFormData({ ...formData, steps: newSteps })
                   }}
                   className="flex-1 rounded-md border-gray-300"
                   rows={2}
@@ -178,10 +179,11 @@ export default function RecipeForm() {
               </div>
               <ImageUpload
                 stepIndex={index}
+                type="step"
                 onUpload={(url: string) => {
-                  const newSteps = [...formData.steps];
-                  newSteps[index].imageUrl = url;
-                  setFormData({ ...formData, steps: newSteps });
+                  const newSteps = [...formData.steps]
+                  newSteps[index].imageUrl = url
+                  setFormData({ ...formData, steps: newSteps })
                 }}
               />
             </div>
@@ -203,5 +205,5 @@ export default function RecipeForm() {
         </button>
       </div>
     </form>
-  );
+  )
 }
