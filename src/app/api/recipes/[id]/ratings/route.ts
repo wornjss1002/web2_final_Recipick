@@ -13,6 +13,13 @@ interface Rating {
   createdAt: string;
 }
 
+interface Recipe {
+  _id: ObjectId;
+  ratings: Rating[];
+  totalRatings: number;
+  averageRating?: number;
+}
+
 export async function POST(
   req: Request,
   { params }: { params: { id: string } }
@@ -40,7 +47,7 @@ export async function POST(
 
     // 레시피 존재 여부 확인
     const recipe = await db
-      .collection("recipes")
+      .collection<Recipe>("recipes")
       .findOne({ _id: new ObjectId(params.id) });
 
     if (!recipe) {
@@ -72,12 +79,12 @@ export async function POST(
       createdAt: new Date().toISOString(),
     };
 
-    const updateResult = await db.collection("recipes").updateOne(
+    const updateResult = await db.collection<Recipe>("recipes").updateOne(
       { _id: new ObjectId(params.id) },
       {
         $push: {
           ratings: newRating,
-        } as any,
+        },
         $inc: {
           totalRatings: 1,
         },
@@ -93,7 +100,7 @@ export async function POST(
 
     // 평균 평점 업데이트
     const updatedRecipe = await db
-      .collection("recipes")
+      .collection<Recipe>("recipes")
       .findOne({ _id: new ObjectId(params.id) });
 
     if (!updatedRecipe) {
